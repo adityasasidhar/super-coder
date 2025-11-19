@@ -4,8 +4,15 @@ A powerful CLI coding assistant powered by Ollama, designed to be a local altern
 
 ## Features
 
+## Features
+
 - **Local Inference**: Runs entirely on your machine using Ollama.
 - **Plan-Execute Workflow**: Creates detailed plans for complex tasks and asks for approval before execution.
+- **Rich UI**:
+    - **Live Spinners**: Visual feedback while the agent is thinking.
+    - **Streaming Output**: Real-time text generation.
+    - **Panel Layouts**: Beautifully formatted tool outputs and interactions.
+    - **Enhanced Input**: Command history (Up/Down arrows) and multi-line support.
 - **File Operations**: Read, write, edit, delete, copy, and move files.
 - **Code Search**: Search for patterns within files or across directories.
 - **Git Integration**: Manage version control directly from the assistant.

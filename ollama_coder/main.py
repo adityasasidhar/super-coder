@@ -20,9 +20,20 @@ def start(model: str = "qwen3:4b"):
     console.print(f"[bold green]Starting Ollama Coder with model: {model}[/bold green]")
     agent = Agent(model_name=model)
     
+    from prompt_toolkit import PromptSession
+    from prompt_toolkit.history import InMemoryHistory
+    from prompt_toolkit.styles import Style
+
+    session = PromptSession(history=InMemoryHistory())
+    
+    style = Style.from_dict({
+        'prompt': 'bold yellow',
+    })
+
     while True:
         try:
-            user_input = Prompt.ask("[bold yellow]You[/bold yellow]")
+            user_input = session.prompt([('class:prompt', 'You: ')], style=style)
+            
             if user_input.lower() in ["exit", "quit"]:
                 break
             

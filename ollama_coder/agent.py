@@ -343,52 +343,83 @@ class Agent:
     def chat(self, user_input: str):
         self.messages.append({"role": "user", "content": user_input})
         
+        from rich.live import Live
+        from rich.spinner import Spinner
+        from rich.panel import Panel
+        from rich.markdown import Markdown
+        from rich.console import Group
+        
         while True:
-            response = self.llm.generate(self.messages, tools=self.tool_definitions)
+            full_content = ""
+            tool_calls = []
             
-            if "error" in response:
-                console.print(f"[red]Error:[/red] {response['error']}")
-                break
+            # Streaming generation
+            with Live(Spinner("dots", text="Thinking...", style="cyan"), refresh_per_second=10, console=console) as live:
+                stream = self.llm.generate_stream(self.messages, tools=self.tool_definitions)
                 
-            message = response["message"]
-            self.messages.append(message)
+                for chunk in stream:
+                    if "error" in chunk:
+                        live.update(f"[red]Error:[/red] {chunk['error']}")
+                        return
+
+                    if "message" in chunk:
+                        msg = chunk["message"]
+                        
+                        # Handle content
+                        if "content" in msg and msg["content"]:
+                            full_content += msg["content"]
+                            live.update(Markdown(full_content))
+                        
+                        # Handle tool calls (Ollama usually sends them in the final chunk or distinct chunks)
+                        if "tool_calls" in msg and msg["tool_calls"]:
+                            tool_calls.extend(msg["tool_calls"])
+
+            # Append assistant message to history
+            assistant_msg = {"role": "assistant", "content": full_content}
+            if tool_calls:
+                assistant_msg["tool_calls"] = tool_calls
+            self.messages.append(assistant_msg)
+
+            # If no tool calls, we are done
+            if not tool_calls:
+                break
             
-            if not message.get("tool_calls"):
-                console.print(f"[green]Assistant:[/green] {message['content']}")
-                break
-                
-            for tool_call in message["tool_calls"]:
+            # Execute tools
+            for tool_call in tool_calls:
                 function_name = tool_call["function"]["name"]
                 arguments = tool_call["function"]["arguments"]
                 
-                console.print(f"[blue]Executing tool:[/blue] {function_name}")
+                # Visual feedback for tool execution
+                console.print(Panel(
+                    Group(
+                        f"[bold blue]Tool:[/bold blue] {function_name}",
+                        f"[dim]Args:[/dim] {json.dumps(arguments, indent=2)}"
+                    ),
+                    title="Executing Tool",
+                    border_style="blue"
+                ))
                 
-                # Print arguments for better visibility
-                if "path" in arguments:
-                    console.print(f"  [dim]Path:[/dim] [cyan]{arguments['path']}[/cyan]")
-                if "command" in arguments:
-                    console.print(f"  [dim]Command:[/dim] [yellow]{arguments['command']}[/yellow]")
-                if "package_name" in arguments:
-                    console.print(f"  [dim]Package:[/dim] [green]{arguments['package_name']}[/green]")
-                if "pattern" in arguments:
-                    console.print(f"  [dim]Pattern:[/dim] [magenta]{arguments['pattern']}[/magenta]")
-                
-                # For other interesting args
-                other_args = {k: v for k, v in arguments.items() if k not in ["path", "command", "package_name", "pattern", "content", "old_text", "new_text"]}
-                if other_args:
-                    console.print(f"  [dim]Args:[/dim] {other_args}")
-                
-                if function_name in self.tools:
-                    result = self.tools[function_name](**arguments)
-                    self.messages.append({
-                        "role": "tool",
-                        "content": str(result),
-                        "name": function_name
-                    })
-                else:
-                    self.messages.append({
-                        "role": "tool",
-                        "content": f"Error: Tool {function_name} not found",
-                        "name": function_name
-                    })
+                with console.status(f"[bold blue]Running {function_name}...[/bold blue]", spinner="bouncingBar"):
+                    if function_name in self.tools:
+                        try:
+                            result = self.tools[function_name](**arguments)
+                            content = str(result)
+                        except Exception as e:
+                            content = f"Error executing tool: {str(e)}"
+                    else:
+                        content = f"Error: Tool {function_name} not found"
+
+                # Show tool output
+                console.print(Panel(
+                    str(content)[:500] + ("..." if len(str(content)) > 500 else ""),
+                    title=f"Output: {function_name}",
+                    border_style="green" if "Error" not in str(content) else "red"
+                ))
+
+                self.messages.append({
+                    "role": "tool",
+                    "content": content,
+                    "name": function_name
+                })
+
 
