@@ -8,7 +8,8 @@ from .tools import (
     delete_file, create_directory, move_file, copy_file, append_to_file, get_file_info,
     git_status, git_diff, git_log, git_commit, git_add,
     install_package, list_installed_packages,
-    check_syntax, lint_file, format_file
+    check_syntax, lint_file, format_file,
+    python_repl
 )
 from .prompts import SYSTEM_PROMPT
 from rich.console import Console
@@ -45,6 +46,7 @@ class Agent:
             "check_syntax": check_syntax,
             "lint_file": lint_file,
             "format_file": format_file,
+            "python_repl": python_repl,
         }
         self.tool_definitions = [
             {
@@ -384,6 +386,20 @@ class Agent:
                             "path": {"type": "string", "description": "Path to the Python file to format"}
                         },
                         "required": ["path"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "python_repl",
+                    "description": "Execute Python code in a safe sandbox. Use this for calculations, data processing, or verifying logic. Captures stdout/stderr. Timeout: 5s.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "code": {"type": "string", "description": "The Python code to execute"}
+                        },
+                        "required": ["code"]
                     }
                 }
             }

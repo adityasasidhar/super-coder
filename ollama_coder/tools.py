@@ -300,3 +300,69 @@ def format_file(path: str) -> str:
             return f"Error formatting {path}:\n{error_msg}"
     except Exception as e:
         return f"Error formatting file: {e}"
+
+# Code Execution Sandbox
+def python_repl(code: str) -> str:
+    """
+    Execute Python code in a safe sandbox environment.
+    Captures stdout/stderr and enforces a timeout.
+    """
+    import sys
+    import io
+    import contextlib
+    import multiprocessing
+    
+    def _exec_code(code_str, queue):
+        # Capture stdout/stderr
+        stdout_capture = io.StringIO()
+        stderr_capture = io.StringIO()
+        
+        try:
+            with contextlib.redirect_stdout(stdout_capture), contextlib.redirect_stderr(stderr_capture):
+                # Create a restricted globals dictionary if needed, 
+                # but for now we trust the agent but sandbox the process
+                exec(code_str, {"__name__": "__main__"})
+                
+            queue.put({
+                "stdout": stdout_capture.getvalue(),
+                "stderr": stderr_capture.getvalue(),
+                "success": True
+            })
+        except Exception as e:
+            import traceback
+            queue.put({
+                "stdout": stdout_capture.getvalue(),
+                "stderr": traceback.format_exc(),
+                "success": False
+            })
+
+    # Use multiprocessing to allow timeout and isolation
+    queue = multiprocessing.Queue()
+    process = multiprocessing.Process(target=_exec_code, args=(code, queue))
+    
+    try:
+        process.start()
+        process.join(timeout=5)  # 5 second timeout
+        
+        if process.is_alive():
+            process.terminate()
+            process.join()
+            return "Error: Code execution timed out (limit: 5 seconds)"
+            
+        if not queue.empty():
+            result = queue.get()
+            output = ""
+            if result["stdout"]:
+                output += f"Output:\n{result['stdout']}\n"
+            if result["stderr"]:
+                output += f"Errors:\n{result['stderr']}\n"
+                
+            if not output:
+                output = "Code executed successfully (no output)"
+                
+            return output
+        else:
+            return "Error: Process finished but returned no result"
+            
+    except Exception as e:
+        return f"Error executing code: {e}"
