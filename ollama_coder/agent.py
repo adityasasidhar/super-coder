@@ -519,8 +519,16 @@ class Agent:
             List of model information dictionaries
         """
         try:
-            models = ollama.list()
-            return models.get('models', [])
+            response = ollama.list()
+            # Convert Model objects to dicts with proper field names
+            models = []
+            for model in response.models:
+                models.append({
+                    'name': model.model,
+                    'size': model.size,
+                    'modified_at': model.modified_at
+                })
+            return models
         except Exception as e:
             console.print(f"[bold red]Error listing models:[/bold red] {str(e)}")
             return []

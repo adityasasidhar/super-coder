@@ -1,4 +1,4 @@
-# Ollama Coder
+# Space
 
 A powerful CLI coding assistant powered by Ollama, designed to be a local alternative to Claude Code.
 
