@@ -226,7 +226,7 @@ def print_banner():
                 border_style="blue",
                 padding=(0, 1),
                 title="[bold cyan]v1.0[/bold cyan]",
-                subtitle="[dim]Local AI Coding Assistant[/dim]",
+                subtitle="[dim]As good as your LLM[/dim]",
             )
             live.update(panel)
             time.sleep(0.25)
