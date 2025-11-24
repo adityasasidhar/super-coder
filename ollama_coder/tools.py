@@ -215,3 +215,88 @@ def install_package(package_name: str) -> str:
 def list_installed_packages() -> str:
     """List installed Python packages."""
     return run_command("pip list")
+
+# Code Quality Tools
+def check_syntax(path: str) -> str:
+    """
+    Check Python file for syntax errors using ast.parse().
+    Fast validation without external dependencies.
+    """
+    try:
+        with open(path, "r") as f:
+            code = f.read()
+        
+        import ast
+        try:
+            ast.parse(code)
+            return f"✓ Syntax check passed for {path}"
+        except SyntaxError as e:
+            return f"✗ Syntax error in {path}:\n  Line {e.lineno}: {e.msg}\n  {e.text}"
+    except Exception as e:
+        return f"Error checking syntax: {e}"
+
+def lint_file(path: str, fix: bool = False) -> str:
+    """
+    Lint a Python file using ruff.
+    Checks for style issues, bugs, and errors.
+    
+    Args:
+        path: Path to the Python file
+        fix: If True, automatically fix issues where possible
+    """
+    try:
+        if not os.path.exists(path):
+            return f"Error: File {path} does not exist"
+        
+        # Run ruff check
+        cmd = f"ruff check {path}"
+        if fix:
+            cmd += " --fix"
+        
+        result = subprocess.run(
+            cmd,
+            shell=True,
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+        
+        output = result.stdout
+        if result.stderr:
+            output += f"\n{result.stderr}"
+        
+        if result.returncode == 0:
+            if fix:
+                return f"✓ Linting passed and fixes applied for {path}\n{output}"
+            else:
+                return f"✓ No linting issues found in {path}"
+        else:
+            return f"Linting issues found in {path}:\n{output}"
+    except Exception as e:
+        return f"Error linting file: {e}"
+
+def format_file(path: str) -> str:
+    """
+    Format a Python file using ruff.
+    Applies PEP 8 and best practice formatting.
+    """
+    try:
+        if not os.path.exists(path):
+            return f"Error: File {path} does not exist"
+        
+        # Run ruff format
+        result = subprocess.run(
+            f"ruff format {path}",
+            shell=True,
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+        
+        if result.returncode == 0:
+            return f"✓ Successfully formatted {path}"
+        else:
+            error_msg = result.stderr or result.stdout
+            return f"Error formatting {path}:\n{error_msg}"
+    except Exception as e:
+        return f"Error formatting file: {e}"

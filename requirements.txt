@@ -42,6 +42,7 @@ jsonpatch==1.33
 jsonpointer==3.0.0
 langchain==1.0.5
 langchain-anthropic==1.0.3
+langchain-community
 langchain-core==1.0.4
 langchain-ollama==1.0.0
 langgraph==1.0.3

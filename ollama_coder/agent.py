@@ -1,12 +1,14 @@
 import json
 from typing import List, Dict, Any
+import ollama
 from .llm import ChatModel
 from .tools import (
     list_files, read_file, write_file, edit_file, run_command,
     search_file, grep_search, find_files,
     delete_file, create_directory, move_file, copy_file, append_to_file, get_file_info,
     git_status, git_diff, git_log, git_commit, git_add,
-    install_package, list_installed_packages
+    install_package, list_installed_packages,
+    check_syntax, lint_file, format_file
 )
 from .prompts import SYSTEM_PROMPT
 from rich.console import Console
@@ -15,6 +17,7 @@ console = Console()
 
 class Agent:
     def __init__(self, model_name: str = "qwen3:4b"):
+        self.model_name = model_name
         self.llm = ChatModel(model=model_name)
         self.messages: List[Dict[str, str]] = [{"role": "system", "content": SYSTEM_PROMPT}]
         self.tools = {
@@ -39,6 +42,9 @@ class Agent:
             "git_add": git_add,
             "install_package": install_package,
             "list_installed_packages": list_installed_packages,
+            "check_syntax": check_syntax,
+            "lint_file": lint_file,
+            "format_file": format_file,
         }
         self.tool_definitions = [
             {
@@ -337,6 +343,49 @@ class Agent:
                         "properties": {}
                     }
                 }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "check_syntax",
+                    "description": "Check a Python file for syntax errors using ast.parse(). Fast validation.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "path": {"type": "string", "description": "Path to the Python file to check"}
+                        },
+                        "required": ["path"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "lint_file",
+                    "description": "Lint a Python file using ruff. Checks for style issues, bugs, and errors. Can auto-fix issues.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "path": {"type": "string", "description": "Path to the Python file to lint"},
+                            "fix": {"type": "boolean", "description": "If true, automatically fix issues where possible"}
+                        },
+                        "required": ["path"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "format_file",
+                    "description": "Format a Python file using ruff. Applies PEP 8 and best practice formatting.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "path": {"type": "string", "description": "Path to the Python file to format"}
+                        },
+                        "required": ["path"]
+                    }
+                }
             }
         ]
 
@@ -421,5 +470,43 @@ class Agent:
                     "content": content,
                     "name": function_name
                 })
+
+    def get_current_model(self) -> str:
+        """Get the name of the currently active model."""
+        return self.model_name
+    
+    def switch_model(self, model_name: str) -> bool:
+        """
+        Switch to a different model.
+        
+        Args:
+            model_name: Name of the model to switch to
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            # Test if the model exists by trying to use it
+            self.llm = ChatModel(model=model_name)
+            self.model_name = model_name
+            console.print(f"[bold green]✓ Switched to model: {model_name}[/bold green]")
+            return True
+        except Exception as e:
+            console.print(f"[bold red]✗ Failed to switch model:[/bold red] {str(e)}")
+            return False
+    
+    def list_available_models(self) -> List[Dict[str, Any]]:
+        """
+        List all available Ollama models.
+        
+        Returns:
+            List of model information dictionaries
+        """
+        try:
+            models = ollama.list()
+            return models.get('models', [])
+        except Exception as e:
+            console.print(f"[bold red]Error listing models:[/bold red] {str(e)}")
+            return []
 
 
