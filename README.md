@@ -1,108 +1,130 @@
-# Space
+# Space: Local AI Coding Assistant
 
-A powerful CLI coding assistant powered by Ollama, designed to be a local alternative to Claude Code.
+Space is a powerful, fully local CLI coding assistant powered by Ollama. It is designed to be a private, secure, and capable alternative to cloud-based coding assistants, offering a rich terminal user interface and a wide range of file and system operations.
 
-## Features
+## 🚀 Features
 
-## Features
+-   **100% Local Inference**: Runs entirely on your machine using Ollama models (e.g., Qwen, Llama 3). No data leaves your system.
+-   **Plan-Execute Workflow**: For complex tasks, Space creates detailed implementation plans and requests user approval before making changes.
+-   **Rich Terminal UI**:
+    -   **Live Spinners**: Visual feedback during AI processing.
+    -   **Streaming Output**: Real-time response generation.
+    -   **Markdown Rendering**: Beautifully formatted text and code in the terminal.
+    -   **Panel Layouts**: Organized output for tools and messages.
+-   **Comprehensive Toolset**:
+    -   **File Operations**: Read, write, edit, delete, copy, move, and append to files.
+    -   **Search**: Regex search within files, grep across directories, and file finding.
+    -   **Git Integration**: Check status, view diffs, log history, stage files, and commit changes.
+    -   **Code Quality**: Syntax checking, linting (Ruff), and auto-formatting.
+    -   **System**: Run shell commands and manage Python packages.
+    -   **Sandbox**: Execute Python code in a safe, isolated environment.
 
-- **Local Inference**: Runs entirely on your machine using Ollama.
-- **Plan-Execute Workflow**: Creates detailed plans for complex tasks and asks for approval before execution.
-- **Rich UI**:
-    - **Live Spinners**: Visual feedback while the agent is thinking.
-    - **Streaming Output**: Real-time text generation.
-    - **Panel Layouts**: Beautifully formatted tool outputs and interactions.
-    - **Enhanced Input**: Command history (Up/Down arrows) and multi-line support.
-- **File Operations**: Read, write, edit, delete, copy, and move files.
-- **Code Search**: Search for patterns within files or across directories.
-- **Git Integration**: Manage version control directly from the assistant.
-- **Package Management**: Install and list Python packages.
-- **Command Execution**: Run shell commands safely.
+## 📋 Prerequisites
 
-## Prerequisites
+1.  **Ollama**: Install Ollama from [ollama.com](https://ollama.com).
+2.  **Python 3.10+**: Ensure you have a recent version of Python installed.
+3.  **Models**: Pull a coding-capable model. `qwen2.5-coder` or `qwen3` are recommended.
+    ```bash
+    ollama pull qwen2.5-coder:7b
+    ```
 
-1. **Ollama**: Install Ollama from [ollama.com](https://ollama.com).
-2. **Models**: Pull the required models (default is `qwen3:4b`).
-   ```bash
-   ollama pull qwen3:4b
-   ```
+## 🛠️ Installation
 
-## Installation
+1.  **Clone the repository**:
+    ```bash
+    git clone <repository-url>
+    cd space-coder
+    ```
 
-1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   cd ollama-coder
-   ```
+2.  **Create a virtual environment**:
+    ```bash
+    python3 -m venv .venv
+    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+    ```
 
-2. Create a virtual environment:
-   ```bash
-   python3 -m venv .venv
-   source .venv/bin/activate
-   ```
+3.  **Install dependencies**:
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-3. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   # OR manually
-   pip install ollama typer rich prompt_toolkit
-   ```
+## 💻 Usage
 
-## Usage
+Start the assistant using the CLI entry point:
 
-## Usage
-
-Using the virtual environment:
 ```bash
-.venv/bin/python -m ollama_coder.main start
+python -m ollama_coder.main start
 ```
 
-Specify a different model:
-```bash
-.venv/bin/python -m ollama_coder.main start --model llama3
-```
+### Command Line Options
 
-## 🧠 Workflow & Planning
+-   `--model`: Specify the Ollama model to use (default: `qwen3:4b`).
+    ```bash
+    python -m ollama_coder.main start --model llama3
+    ```
+
+### Special Slash Commands
+
+Inside the chat interface, you can use these commands:
+
+-   `/models`: List all available Ollama models on your system.
+-   `/model <name>`: Switch to a different model instantly.
+-   `/current`: Show the currently active model.
+-   `/help`: Display the help menu.
+-   `exit` or `quit`: Close the application.
+
+## 🧠 Workflows
 
 ### 1. Planning Mode (Complex Tasks)
-For tasks that require multiple steps (like building a website or refactoring a module), the assistant follows a strict **Plan-Execute** workflow:
-
-1.  **Analysis**: The agent analyzes your request to understand the scope.
-2.  **Plan Generation**: It creates a detailed, step-by-step plan outlining exactly which files will be created or modified.
-3.  **User Review**: The plan is presented to you. You can approve it (type `yes`, `proceed`) or provide feedback to refine it.
-4.  **Execution**: Only after approval does the agent start creating files or running commands.
-
-**Example Interaction:**
-> **You**: "Create a personal portfolio website."
-> **Agent**: "I'll build a portfolio with the following steps:
-> 1. Create `index.html` with sections for About, Projects, and Contact.
-> 2. Create `style.css` with a responsive grid layout.
-> 3. Create `script.js` for smooth scrolling navigation.
-> Does this plan look good?"
-> **You**: "Yes, but add a dark mode toggle."
-> **Agent**: "Understood. I've updated the plan to include dark mode styles and JS logic. Proceeding?"
+When you ask for a complex change (e.g., "Refactor the database module" or "Create a new web app"), Space enters **Planning Mode**:
+1.  **Analyzes** the request.
+2.  **Generates** a step-by-step implementation plan.
+3.  **Asks** for your approval.
+4.  **Executes** the plan only after you say "yes".
 
 ### 2. Direct Mode (Simple Tasks)
-For quick actions, the agent acts immediately without unnecessary dialogue:
-> **You**: "Read the contents of main.py"
-> **Agent**: [Reads and displays file content immediately]
+For straightforward requests, Space acts immediately:
+-   "Read main.py" -> Displays content.
+-   "Run ls -la" -> Shows directory listing.
 
-## Available Tools
+## 🧰 Available Tools
 
-| Category | Tools |
-|----------|-------|
-| **File Ops** | `list_files`, `read_file`, `write_file`, `edit_file`, `delete_file`, `copy_file`, `move_file` |
-| **Search** | `search_file`, `grep_search`, `find_files` |
-| **Git** | `git_status`, `git_diff`, `git_log`, `git_add`, `git_commit` |
-| **System** | `run_command`, `install_package`, `list_installed_packages` |
+| Category | Tool Name | Description |
+| :--- | :--- | :--- |
+| **File Ops** | `list_files` | List directory contents. |
+| | `read_file` | Read file content. |
+| | `write_file` | Write content to a file (creates dirs). |
+| | `edit_file` | Replace exact text block in a file. |
+| | `delete_file` | Remove a file. |
+| | `copy_file` | Copy a file. |
+| | `move_file` | Move or rename a file. |
+| | `append_to_file` | Append text to a file. |
+| | `get_file_info` | Get size and modification time. |
+| **Search** | `search_file` | Search text/regex in a single file. |
+| | `grep_search` | Search pattern across a directory. |
+| | `find_files` | Find files by filename pattern. |
+| **Git** | `git_status` | Show working tree status. |
+| | `git_diff` | Show changes. |
+| | `git_log` | View commit history. |
+| | `git_add` | Stage files. |
+| | `git_commit` | Commit changes. |
+| **Code Quality** | `check_syntax` | Fast Python syntax validation. |
+| | `lint_file` | Lint with Ruff (supports auto-fix). |
+| | `format_file` | Format code with Ruff. |
+| **System** | `run_command` | Execute shell commands (bash). |
+| | `install_package` | Install pip packages. |
+| | `list_installed_packages` | List pip packages. |
+| **Sandbox** | `python_repl` | Execute Python code in a safe sandbox. |
 
-## Examples
+## 📝 Examples
 
 **Create a new project:**
-> "Create a directory called 'my-app' and add a main.py that prints hello world"
+> "Create a directory called 'my-app', add a main.py that prints hello world, and a requirements.txt."
 
 **Refactor code:**
-> "Search for all print statements in src/ and replace them with logging"
+> "Search for all print statements in src/ and replace them with logging calls. Then format the files."
 
 **Git workflow:**
-> "Check git status, add all changes, and commit with message 'Initial commit'"
+> "Check git status, add all changes, and commit with message 'Initial feature implementation'."
+
+**Data Analysis:**
+> "Read data.csv and use python code to calculate the average of the 'score' column."
